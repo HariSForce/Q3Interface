@@ -1321,7 +1321,7 @@ global class WS_Work_Order{
             Set<id> aidset = new Set<id>();
             for(WorkOrder wou: WorkOrderList)
             {
-                SVMXC__Service_Order__c  wo =   getWorkOrder(wou);
+                SVMXC__Service_Order__c  wo =   WS_Work_Order_Handler.getWorkOrder(wou);
                 System.debug('\n CLog: '+wo);
                 
                 if(wou.WOGBackOfficeReference != null){
@@ -2517,12 +2517,7 @@ mandatoryFields += mandatoryFields + 'success';
                 
                 
                 sorder.add(wo);
-                
-                
-                
-                
-                
-                
+               
                 
                 
             }
@@ -2981,69 +2976,24 @@ mandatoryFields += mandatoryFields + 'success';
     }
     public static Map<Id,InstalledProduct> IPUnitMap = new Map<Id,InstalledProduct>();
     public Static void prepareIPMap(Set<id> idset){
-        
-        for(SVMXC__Installed_Product__c ipobj: [select id, name,GoldenAssetId__c,SVMXC__Company__r.SEAccountID__c,
-                                                SVMXC__Company__r.Name,SVMXC__Company__r.AccountLocalName__c,SVMXC__Company__r.Street__c,SVMXC__Company__r.StreetLocalLang__c,
-                                                SVMXC__Company__r.AdditionalAddress__c,SVMXC__Company__r.LocalAdditionalAddress__c,SVMXC__Company__r.ZipCode__c,
-                                                SVMXC__Company__r.City__c,SVMXC__Company__r.LocalCity__c,SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Company__r.StateProvince__c,
-                                                SVMXC__Company__r.StateProvince__r.StateProvinceCode__c,SVMXC__Company__r.RecordType.Name,
-                                                CustomerSerialNumber__c, SVMXC__Serial_Lot_Number__c, SchneiderCommercialReference__c,SVMXC__Country__c,RecordType.Name from SVMXC__Installed_Product__c where id in :idset ])
-        {
-            InstalledProduct ipu = new InstalledProduct();
-            ipu.GoldenID = ipobj.GoldenAssetId__c;
-            ipu.Name =  ipobj.Name;
-            ipu.InstalledAtGoldenID = ipobj.SVMXC__Company__r.SEAccountID__c;
-            //ipu.SerialNumber = ipobj.CustomerSerialNumber__c;
-            ipu.SerialNumber = ipobj.SVMXC__Serial_Lot_Number__c; // Yassine.B 13/03/2015 - fix the right serial number field on IP
-            ipu.SECommercialRef = ipobj.SchneiderCommercialReference__c;
-            ipu.installedAtCountryCode = ipobj.SVMXC__Country__c;
-            ipu.installedAtGoldenID = ipobj.SVMXC__Company__r.SEAccountID__c;
-            ipu.installedAtName = ipobj.SVMXC__Company__r.Name;
-            ipu.installedAtNameLocal = ipobj.SVMXC__Company__r.AccountLocalName__c;
-            ipu.installedAtStreet = ipobj.SVMXC__Company__r.Street__c;
-            ipu.installedAtStreetLocal = ipobj.SVMXC__Company__r.StreetLocalLang__c;
-            ipu.installedAtAddAddressInfo = ipobj.SVMXC__Company__r.AdditionalAddress__c;
-            ipu.installedAtAddAddressInfoLocal = ipobj.SVMXC__Company__r.LocalAdditionalAddress__c;
-            ipu.installedAtZipCode = ipobj.SVMXC__Company__r.ZipCode__c;
-            ipu.installedAtCity = ipobj.SVMXC__Company__r.City__c;
-            ipu.installedAtLocalCity = ipobj.SVMXC__Company__r.LocalCity__c;
-            ipu.installedAtCountryCode = ipobj.SVMXC__Company__r.Country__r.CountryCode__c;
-            ipu.installedAtStateProvinceCode = ipobj.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c;
-            
-            
-            //ipu.installedAtRecordTypeName = ipobj.RecordType.name;
-            ipu.installedAtRecordTypeName = ipobj.SVMXC__Company__r.RecordType.Name; // Yassine.B 13/03/2015 - fix the record type name field on Account
-            IPUnitMap.put(ipobj.id, ipu);
-        }
-        
+        if(idset != null && idset.size()>0)
+		{
+			Set<id> ipidSet = new Set<id>();
+			ipidSet = idset;
+			List<SVMXC__Installed_Product__c> ipList = DataBase.query(INSTALLEDPRODUCT_QUERY+' where id in : ipidSet ');
+			for(VMXC__Installed_Product__c ipobj:ipList){
+				InstalledProduct ipu = WS_Work_Order_Handler.getInstalledProductFromIPObject(ipobj);           
+				IPUnitMap.put(ipobj.id, ipu);
+			}
+		}
         
     }
     public static Map<Id,Technician> TechnicianMap = new Map<Id,Technician>();
-    public Static void  prepareTechnicians(Set<id> idset){
-        
+    public Static void  prepareTechnicians(Set<id> idset){        
         for(SVMXC__Service_Group_Members__c gm:[select Level__c, id, SESAID__c,Business_Unit__c,SVMXC__Salesforce_User__c,SVMXC__Salesforce_User__r.FirstName,SVMXC__Salesforce_User__r.LastName,SVMXC__Salesforce_User__r.email,ThirdPartyContact__c,ThirdPartyContact__r.FirstName,ThirdPartyContact__r.LastName,ThirdPartyContact__r.email,SVMXC__Email__c,SVMXC__Role__c  from SVMXC__Service_Group_Members__c]){         
-            Technician t = new Technician();
-            if(gm.SVMXC__Role__c == 'Schneider Employee'){
-                t.SESAID  = gm.SESAID__c;
-                t.FirstName = gm.SVMXC__Salesforce_User__r.FirstName;
-                t.LastName = gm.SVMXC__Salesforce_User__r.LastName;
-                t.Email = gm.SVMXC__Salesforce_User__r.email;
-                t.RoleName = gm.SVMXC__Role__c;
-                t.BusinessUnit = gm.Business_Unit__c;
-                t.level =gm.Level__c; // May 2015 Release 
-            }
-            else{
-                
-                t.FirstName = gm.ThirdPartyContact__r.FirstName;
-                t.LastName = gm.ThirdPartyContact__r.LastName;
-                t.Email = gm.ThirdPartyContact__r.email;
-                t.RoleName = gm.SVMXC__Role__c;
-                t.BusinessUnit = gm.Business_Unit__c;
-                t.level =gm.Level__c; // May 2015 Release 
-            }
+            Technician t =  WS_Work_Order_Handler.GroupMemberToTechnician(gm);           
             TechnicianMap.put(gm.id,t);
-        }
-        
+        }       
         
     }
     public Static  WorkOrder  populateAndGetWorkOrderFields(SVMXC__Service_Order__c wo){
@@ -3051,89 +3001,7 @@ mandatoryFields += mandatoryFields + 'success';
         woresult = WS_Work_Order_Handler.populateWorkOrderFields(wo);
         return woresult;
     }
-   
     
-    public static SVMXC__Service_Order__c getWorkOrder(WorkOrder wou ){
-        
-        SVMXC__Service_Order__c  wo = new SVMXC__Service_Order__c();
-        wo.Id = wou.workOrderbFOID;
-        
-        wo.WorkOrderName__c =  wou.workOrderName;
-        wo.CustomerRequestedTime__c =string.valueof(wou.customerRequestedTime);
-        wo.BusinessUnit__c = wou.serviceBusinessUnit ;
-        wo.WOPriority__c = wou.priority;
-        wo.Comments_to_Planner__c = wou.commentToPlanner;
-        wo.CountryOfBackOffice__c = wou.countryOfBackOffice;
-        wo.BackOfficeSystem__c = wou.backOfficeSystem;
-        wo.SVMXC__Order_Status__c = wou.workOrderStatus;
-        wo.SubStatus__c = wou.workOrderSubStatus;
-        wo.Work_Order_Category__c = wou.workOrderCategory;
-        wo.SVMXC__Order_Type__c = wou.workOrderType;
-        wo.WorkOrderSubType__c = wou.workOrderSubType;
-        wo.IsBillable__c =  wou.isBillable;
-        wo.SVMXC__Billing_Type__c =  wou.billingType;   
-        wo.CustomerRequestedDate__c = wou.customerRequestedDate;
-        wo.SVMXC__Problem_Description__c =wou.workOrderReason;      
-        //wo.TECH_FOLastUpdate_Timestamp__c =wou.TECH_FOLastUpdateTimestamp;
-        wo.PONumber__c  = wou.PONumber;
-        wo.salesOrderLineNumber__c = wou.salesOrderLineNumber;
-        wo.Customer_Reference_Number__c = wou.customerReferenceNumber;
-        wo.SVMXC__Company__c   = wou.installedAtAccountbFOID ;     
-        wo.Sales_Order_Number__c = wou.salesOrderNumber;
-        
-        wo.EstimatedExpenseCost__c = wou.estimatedExpenseCost;
-        wo.EstimatedMaterialCost__c = wou.estimatedMaterialCost;
-        //wo.estimatedLaborCost
-        wo.Shipped_Serial_Number__c = wou.mainShippedSerialNumber;
-        wo.QuotationNumber__c = wou.quotationNumber;
-        wo.BillToAccount__c = wou.billToAccountbFOID;
-        wo.SVMXC__Product__c = wou.productbFOID;
-        wo.Estimated_Labor_Cost__c = wou.estimatedLaborCost;
-        wo.Project__c = wou.projectNumber;
-        wo.salesOrderLineNumber__c =wou.salesOrderLineNumber;
-        wo.Sales_Order_Number__c =wou.salesOrderNumber;
-        wo.Service_Business_Unit__c  = wou.serviceBusinessUnit;
-        //wo.SVMXC__Service_Contract__c  = wou.serviceContractbFOID;
-        //wo.ServiceLine__c =wou.serviceLinebFOID;
-        wo.SVMXC__Service_Contract__c = wou.serviceLinebFOID; 
-        wo.ServiceLine__c =wou.serviceContractbFOID;
-        wo.SoldToAccount__c  = wou.soldToAccountbFOID;
-        wo.BackOfficeReference__c = wou.WOBackOfficeReference;
-        wo.CurrencyIsoCode =wou.WOcurrencyIsCode;
-        wo.TECH_IsBoundToBackOffice__c =  true;//Added for RecoredType Switch 18/02/2015
-        if(wou.WOGBackOfficeReference != null )
-            wo.TECH_WOGBackOfficeReference__c = wou.WOGBackOfficeReference;
-        else{
-            wo.TECH_WOGBackOfficeReference__c =wou.WOBackOfficeReference;
-        }
-        
-        wo.Back_Office_Bill__c = wou.BackOfficeBillToValid; // Yassine. B 13/03/2015 
-        wo.TECH_WOBackOfficeRecordID__c = wou.TECH_WOBackOfficeRecordID;
-        wo.installedAtAccountInfo__c =  wou.installedAtAccountInfo;
-        //if(wou.totalEstimatedCosts != null && wou.totalEstimatedCosts !='')
-        //wo.Total_Estimated_Costs__c =  Decimal.valueOf(wou.totalEstimatedCosts);
-        
-        
-        
-        // webservice String  serviceContractBOReference;
-        // webservice String  serviceLineBOReference;
-        // webservice String  salesOrderNumber;
-        
-        // webservice String  PONumber;
-        // webservice String  serviceCenterTerritoryName;
-        
-        
-        
-        //webservice Id   serviceLinebFOID;
-        //webservice String   WOBackOfficeReference;
-        //webservice String   TECH_WOBackOfficeRecordID;
-        
-        
-        //webservice Decimal   estimatedLaborCost;
-        
-        
-        return wo;
-    }
     
     //Added by VISHNU C for BR 8310 March 2016 Release
     public static void CreateMapIP(List<SVMXC__Installed_Product__c> wowdList){
@@ -3705,8 +3573,7 @@ from SVMXC__Service_Order_Line__c where Id IN :WDIds OR WDBackOfficeReference__c
         
         return  solines;     
         
-        // Some comment for the test fix
-		// some more changes
+       
     }
     
 }
