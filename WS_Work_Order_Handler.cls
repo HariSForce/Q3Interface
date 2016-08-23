@@ -604,6 +604,7 @@ History
         String Query='';
         String QueryString =CONTACT_QUERY;
         String WhereClause ='';
+		String ORClause= ' OR ';
         //Def-7331
         String AccountFilter ='';
         if(AccntIDSet != null && AccntIDSet.size()>0)
@@ -612,75 +613,55 @@ History
         }//End:Def-7331
         
         if(fmap != null && fmap.containskey('GID'))
-        {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR  SEContactID__c  in  ('+ SOQLListFormat(fmap.get('GID')) +') ';
-            else
-                WhereClause +=  '  SEContactID__c  in  ('+ SOQLListFormat(fmap.get('GID')) +') ';
+        {            
+				String StringWithQuote = '  SEContactID__c  in  ('+ SOQLListFormat(fmap.get('GID')) +') ';
+				StringConcat(WhereClause,StringWithQuote,ORClause);
         }       
         
         if(fmap != null && fmap.containskey('FN'))
-        {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR  FirstName in  ('+ SOQLListFormat(fmap.get('FN')) +') ';
-            else
-                WhereClause +=  '  FirstName in  ('+ SOQLListFormat(fmap.get('FN')) +') ';
+        {            
+				String StringWithQuote = ' FirstName in  ('+ SOQLListFormat(fmap.get('FN')) +') ';
+				StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('LFN'))
-        {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR LocalFirstName__c in ('+ SOQLListFormat(fmap.get('LFN')) +') ';
-            else
-                WhereClause +=  ' LocalFirstName__c in ('+ SOQLListFormat(fmap.get('LFN')) +') ';
+        {           		
+				String StringWithQuote = ' LocalFirstName__c in ('+ SOQLListFormat(fmap.get('LFN')) +') ';
+				StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('MI'))
-        {   
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR MidInit__c in ('+ SOQLListFormat(fmap.get('MI')) +') ';
-            else
-                WhereClause +=  ' MidInit__c in ('+ SOQLListFormat(fmap.get('MI')) +') ';
+        {               	
+			String StringWithQuote =  ' MidInit__c in ('+ SOQLListFormat(fmap.get('MI')) +') ';
+			StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('LMI'))
-        {   
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR LocalMidInit__c in ('+ SOQLListFormat(fmap.get('LMI')) +') ';
-            else
-                WhereClause +=  ' LocalMidInit__c in ('+ SOQLListFormat(fmap.get('LMI')) +') ';
+        {  		
+			String StringWithQuote =  ' LocalMidInit__c in ('+ SOQLListFormat(fmap.get('LMI')) +') ';
+			StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('LN'))
         {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR LastName in ('+ SOQLListFormat(fmap.get('LN')) +') ';
-            else
-                WhereClause +=  ' LastName in ('+ SOQLListFormat(fmap.get('LN')) +') ';
+				String StringWithQuote =  ' LastName in ('+ SOQLListFormat(fmap.get('LN')) +') ';
+				StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('LLN'))
         {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR LocalLastName__c in ('+ SOQLListFormat(fmap.get('LLN')) +') ';
-            else
-                WhereClause +=  ' LocalLastName__c in ('+ SOQLListFormat(fmap.get('LLN')) +') ';
+          	String StringWithQuote =  ' LocalLastName__c in ('+ SOQLListFormat(fmap.get('LLN')) +') ';
+			StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('EA'))
         {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR Email in ('+ SOQLListFormat(fmap.get('EA')) +') ';
-            else
-                WhereClause +=  ' Email in ('+ SOQLListFormat(fmap.get('EA')) +') ';
+            String StringWithQuote =  ' Email in ('+ SOQLListFormat(fmap.get('EA')) +') ';
+			StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('MP'))
-        {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR MobilePhone in ('+ SOQLListFormat(fmap.get('MP')) +') ';
-            else
-                WhereClause +=  ' MobilePhone in ('+ SOQLListFormat(fmap.get('MP')) +') ';
+        {            
+			String StringWithQuote =  ' MobilePhone in ('+ SOQLListFormat(fmap.get('MP')) +') ';
+			StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         if(fmap != null && fmap.containskey('WP'))
-        {
-            if(WhereClause.length()>0)
-                WhereClause +=  ' OR WorkPhone__c in ('+ SOQLListFormat(fmap.get('WP')) +') ';
-            else
-                WhereClause +=  ' WorkPhone__c in ('+ SOQLListFormat(fmap.get('WP')) +') ';
+        {            
+			String StringWithQuote =  ' WorkPhone__c in ('+ SOQLListFormat(fmap.get('WP')) +') ';
+			StringConcat(WhereClause,StringWithQuote,ORClause);
         }
         //Def-7331
         if(AccountFilter.length()>0)
@@ -700,7 +681,9 @@ History
         return Query;
         
     }
-    
+    public static  void   StringConcat(String original , String nst, String extst){
+		original +=(original.length()>0) ? extst+nst : nst;		
+	}
     public static  void  UpdateFieldMap(Map<String,Set<String>> fmap, Map<String,String> ipmap){
         Map<String,String> ipfm = new Map<String,String>();
         if(ipmap != null ){
